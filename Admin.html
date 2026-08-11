@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f0f2f5; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 12px 50px; }
+    .card-summary { border-radius: 14px; text-align:center; padding: 16px; color:#fff; }
+    .bg-hadir { background: linear-gradient(135deg,#22c55e,#16a34a); }
+    .bg-telat { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .bg-tidak { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    table td, table th { vertical-align: middle; font-size: .88rem; }
+    .foto-thumb { width:40px; height:40px; object-fit:cover; border-radius:6px; }
+    #loginGate { max-width: 380px; margin: 80px auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; padding: 14px 0; }
+    .badge-status { font-size: .75rem; }
+  </style>
+</head>
+<body>
+
+  <div id="loginGate" class="card p-4 shadow-sm">
+    <h5 class="fw-bold mb-3 text-center">🔒 Login Admin</h5>
+    <input type="text" id="adminUser" class="form-control mb-2" placeholder="Username" autocomplete="username">
+    <input type="password" id="adminPass" class="form-control mb-3" placeholder="Password" autocomplete="current-password">
+    <button class="btn btn-primary w-100" onclick="cekLogin()">Masuk</button>
+    <div id="loginErr" class="text-danger small mt-2 text-center"></div>
+    <a href="?page=absen" class="d-block text-center small mt-3 text-secondary">← Ke halaman Absen</a>
+  </div>
+
+  <div class="wrap" id="mainApp" style="display:none;">
+    <div class="topbar">
+      <h5 class="fw-bold mb-0">📊 Dashboard Admin</h5>
+      <div>
+        <span class="text-muted small me-2" id="namaAdminLabel"></span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">Logout</button>
+      </div>
+    </div>
+
+    <ul class="nav nav-pills mb-3 flex-wrap" id="navTabs">
+      <li class="nav-item"><button class="nav-link active" data-tab="laporan">Laporan</button></li>
+      <li class="nav-item"><button class="nav-link" data-tab="pendaftaran">Pendaftaran Baru <span id="badgePending" class="badge bg-danger ms-1" style="display:none;">0</span></button></li>
+      <li class="nav-item"><button class="nav-link" data-tab="karyawan">Kelola Karyawan</button></li>
+      <li class="nav-item"><button class="nav-link" data-tab="shift">Kelola Shift</button></li>
+      <li class="nav-item"><button class="nav-link" data-tab="pengaturan">Pengaturan</button></li>
+    </ul>
+
+    <!-- TAB LAPORAN -->
+    <div class="tab-pane" id="tab-laporan">
+      <div class="card p-3 mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-6 col-md-3">
+            <label class="form-label small">Dari Tanggal</label>
+            <input type="date" id="startDate" class="form-control">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small">Sampai Tanggal</label>
+            <input type="date" id="endDate" class="form-control">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small">Jenis Laporan</label>
+            <select id="filterType" class="form-select">
+              <option value="hadir">Absen Masuk (Hadir)</option>
+              <option value="telat">Telat</option>
+              <option value="tidak_hadir">Tidak Hadir</option>
+              <option value="semua">Semua (Masuk &amp; Pulang)</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <button class="btn btn-primary w-100" onclick="muatLaporan()">Tampilkan</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="card-summary bg-hadir"><div class="small">Total Hadir</div><div class="fs-3 fw-bold" id="sumHadir">0</div></div>
+        </div>
+        <div class="col-4">
+          <div class="card-summary bg-telat"><div class="small">Total Telat</div><div class="fs-3 fw-bold" id="sumTelat">0</div></div>
+        </div>
+        <div class="col-4">
+          <div class="card-summary bg-tidak"><div class="small">Total Tidak Hadir</div><div class="fs-3 fw-bold" id="sumTidak">0</div></div>
+        </div>
+      </div>
+
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <b id="tableTitle">Hasil Laporan</b>
+          <button class="btn btn-sm btn-outline-secondary" onclick="exportCSV()">⬇️ Export CSV</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"><tr><td class="text-center text-muted py-4">Pilih tanggal lalu klik Tampilkan</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PENDAFTARAN -->
+    <div class="tab-pane" id="tab-pendaftaran" style="display:none;">
+      <div class="card p-3">
+        <b class="mb-2 d-block">Menunggu Persetujuan</b>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Nama</th><th>Departemen</th><th>Shift</th><th>Tanggal Daftar</th><th>Aksi</th></tr></thead>
+            <tbody id="pendingBody"><tr><td colspan="6" class="text-center text-muted py-3">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB KARYAWAN -->
+    <div class="tab-pane" id="tab-karyawan" style="display:none;">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <b>Semua Karyawan</b>
+          <button class="btn btn-sm btn-outline-secondary" onclick="muatKaryawan()">🔄 Muat Ulang</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Nama</th><th>Departemen</th><th>Shift</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="karyawanBody"><tr><td colspan="6" class="text-center text-muted py-3">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB SHIFT -->
+    <div class="tab-pane" id="tab-shift" style="display:none;">
+      <div class="card p-3 mb-3">
+        <b class="mb-2 d-block">Tambah / Update Shift</b>
+        <div class="row g-2">
+          <div class="col-6 col-md-2"><input class="form-control form-control-sm" id="shiftId" placeholder="ID Shift"></div>
+          <div class="col-6 col-md-3"><input class="form-control form-control-sm" id="shiftNama" placeholder="Nama Shift"></div>
+          <div class="col-6 col-md-2"><input type="time" class="form-control form-control-sm" id="shiftMasuk"></div>
+          <div class="col-6 col-md-2"><input type="time" class="form-control form-control-sm" id="shiftPulang"></div>
+          <div class="col-6 col-md-2"><input type="number" class="form-control form-control-sm" id="shiftToleransi" placeholder="Toleransi (menit)"></div>
+          <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100" onclick="simpanShift()">Simpan</button></div>
+        </div>
+        <div id="shiftMsg" class="small mt-2"></div>
+      </div>
+      <div class="card p-3">
+        <b class="mb-2 d-block">Daftar Shift</b>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Nama</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Toleransi</th><th>Aksi</th></tr></thead>
+            <tbody id="shiftBody"><tr><td colspan="6" class="text-center text-muted py-3">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PENGATURAN -->
+    <div class="tab-pane" id="tab-pengaturan" style="display:none;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card p-3">
+            <b class="mb-2 d-block">Ganti Password Saya</b>
+            <input type="password" id="oldPass" class="form-control mb-2" placeholder="Password lama">
+            <input type="password" id="newPass" class="form-control mb-2" placeholder="Password baru (min. 6 karakter)">
+            <button class="btn btn-primary btn-sm" onclick="gantiPassword()">Ganti Password</button>
+            <div id="passMsg" class="small mt-2"></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-3">
+            <b class="mb-2 d-block">Tambah Akun Admin Baru</b>
+            <input type="text" id="newAdminUser" class="form-control mb-2" placeholder="Username baru">
+            <input type="text" id="newAdminNama" class="form-control mb-2" placeholder="Nama">
+            <input type="password" id="newAdminPass" class="form-control mb-2" placeholder="Password (min. 6 karakter)">
+            <button class="btn btn-primary btn-sm" onclick="tambahAdmin()">Tambah Admin</button>
+            <div id="addAdminMsg" class="small mt-2"></div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card p-3">
+            <b class="mb-2 d-block">Daftar Akun Admin</b>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead><tr><th>Username</th><th>Nama</th><th>Dibuat</th></tr></thead>
+                <tbody id="adminListBody"><tr><td colspan="3" class="text-center text-muted py-2">Memuat...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var adminUser = '', adminPass = '';
+    var lastData = [], lastFilter = 'hadir';
+    var shiftListCache = [];
+
+    // ---------- LOGIN ----------
+    function cekLogin() {
+      var u = document.getElementById('adminUser').value.trim();
+      var p = document.getElementById('adminPass').value;
+      google.script.run.withSuccessHandler(function (res) {
+        if (res.success) {
+          adminUser = u; adminPass = p;
+          document.getElementById('loginGate').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'block';
+          document.getElementById('namaAdminLabel').textContent = '👤 ' + res.nama;
+          document.getElementById('startDate').valueAsDate = new Date();
+          document.getElementById('endDate').valueAsDate = new Date();
+          muatLaporan();
+          muatPending();
+        } else {
+          document.getElementById('loginErr').textContent = res.message;
+        }
+      }).adminLogin(u, p);
+    }
+
+    // ---------- TAB NAVIGATION ----------
+    document.getElementById('navTabs').addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      document.querySelectorAll('#navTabs .nav-link').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-pane').forEach(function (p) { p.style.display = 'none'; });
+      var tab = btn.getAttribute('data-tab');
+      document.getElementById('tab-' + tab).style.display = 'block';
+      if (tab === 'pendaftaran') muatPending();
+      if (tab === 'karyawan') muatKaryawan();
+      if (tab === 'shift') muatShift();
+      if (tab === 'pengaturan') muatAdminList();
+    });
+
+    // ---------- LAPORAN ----------
+    function muatLaporan() {
+      var start = document.getElementById('startDate').value;
+      var end = document.getElementById('endDate').value;
+      var filter = document.getElementById('filterType').value;
+      lastFilter = filter;
+      document.getElementById('tableBody').innerHTML = '<tr><td class="text-center py-4">Memuat...</td></tr>';
+
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res.success) { alert(res.message); return; }
+        lastData = res.data;
+        document.getElementById('sumHadir').textContent = res.ringkasan.totalHadir;
+        document.getElementById('sumTelat').textContent = res.ringkasan.totalTelat;
+        document.getElementById('sumTidak').textContent = res.ringkasan.totalTidakHadir;
+        renderTable(filter, res.data);
+      }).getReport(start, end, filter, adminUser, adminPass);
+    }
+
+    function renderTable(filter, data) {
+      var head = document.getElementById('tableHead');
+      var body = document.getElementById('tableBody');
+      document.getElementById('tableTitle').textContent =
+        filter === 'hadir' ? 'Daftar Absen Masuk' :
+        filter === 'telat' ? 'Daftar Telat' :
+        filter === 'tidak_hadir' ? 'Daftar Tidak Hadir' : 'Semua Absensi (Masuk & Pulang)';
+
+      if (filter === 'tidak_hadir') {
+        head.innerHTML = '<tr><th>Tanggal</th><th>ID</th><th>Nama</th><th>Shift</th><th>Status</th></tr>';
+        body.innerHTML = data.length ? data.map(function (r) {
+          return '<tr><td>' + r.tanggal + '</td><td>' + r.id + '</td><td>' + r.nama + '</td><td>' + r.shift +
+            '</td><td><span class="badge bg-danger">Tidak Hadir</span></td></tr>';
+        }).join('') : '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada data</td></tr>';
+      } else {
+        head.innerHTML = '<tr><th>Foto</th><th>Tanggal</th><th>ID</th><th>Nama</th><th>Tipe</th><th>Jam</th><th>Shift</th><th>Status</th><th>Lokasi</th></tr>';
+        body.innerHTML = data.length ? data.map(function (r) {
+          var badge = r.status === 'Telat' ? 'bg-warning text-dark' :
+                      r.status === 'Pulang Cepat' ? 'bg-info text-dark' : 'bg-success';
+          var foto = r.foto ? '<img class="foto-thumb" src="' + r.foto + '">' : '-';
+          return '<tr><td>' + foto + '</td><td>' + r.tanggal + '</td><td>' + r.id + '</td><td>' + r.nama +
+            '</td><td>' + r.tipe + '</td><td>' + r.jam + '</td><td>' + r.shift +
+            '</td><td><span class="badge ' + badge + '">' + r.status + '</span></td>' +
+            '<td><a href="https://maps.google.com/?q=' + r.lat + ',' + r.lng + '" target="_blank">Peta</a></td></tr>';
+        }).join('') : '<tr><td colspan="9" class="text-center text-muted py-3">Tidak ada data</td></tr>';
+      }
+    }
+
+    function exportCSV() {
+      if (!lastData.length) { alert('Tidak ada data untuk diexport.'); return; }
+      var rows = [];
+      if (lastFilter === 'tidak_hadir') {
+        rows.push(['Tanggal', 'ID', 'Nama', 'Shift', 'Status']);
+        lastData.forEach(function (r) { rows.push([r.tanggal, r.id, r.nama, r.shift, 'Tidak Hadir']); });
+      } else {
+        rows.push(['Tanggal', 'ID', 'Nama', 'Tipe', 'Jam', 'Shift', 'Status', 'Latitude', 'Longitude', 'Alamat']);
+        lastData.forEach(function (r) { rows.push([r.tanggal, r.id, r.nama, r.tipe, r.jam, r.shift, r.status, r.lat, r.lng, r.alamat]); });
+      }
+      var csv = rows.map(function (row) {
+        return row.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'laporan_absensi_' + lastFilter + '.csv';
+      link.click();
+    }
+
+    // ---------- PENDAFTARAN ----------
+    function muatPending() {
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res.success) return;
+        var pending = res.data.filter(function (k) { return k.status === 'Pending'; });
+        var badge = document.getElementById('badgePending');
+        if (pending.length) { badge.style.display = 'inline-block'; badge.textContent = pending.length; }
+        else { badge.style.display = 'none'; }
+
+        var body = document.getElementById('pendingBody');
+        body.innerHTML = pending.length ? pending.map(function (k) {
+          return '<tr><td>' + k.id + '</td><td>' + k.nama + '</td><td>' + k.departemen + '</td><td>' + k.shiftId +
+            '</td><td>' + k.tanggal + '</td><td>' +
+            '<button class="btn btn-sm btn-success me-1" onclick="setujui(\'' + k.id + '\')">Setujui</button>' +
+            '<button class="btn btn-sm btn-outline-danger" onclick="tolak(\'' + k.id + '\')">Tolak</button></td></tr>';
+        }).join('') : '<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada pendaftaran baru</td></tr>';
+      }).getKaryawanAdmin(adminUser, adminPass);
+    }
+
+    function setujui(id) {
+      google.script.run.withSuccessHandler(function (res) {
+        alert(res.message);
+        muatPending();
+      }).approveEmployee(id, adminUser, adminPass);
+    }
+
+    function tolak(id) {
+      if (!confirm('Tolak pendaftaran ID ' + id + '?')) return;
+      google.script.run.withSuccessHandler(function (res) {
+        alert(res.message);
+        muatPending();
+      }).rejectEmployee(id, adminUser, adminPass);
+    }
+
+    // ---------- KELOLA KARYAWAN ----------
+    function muatKaryawan() {
+      document.getElementById('karyawanBody').innerHTML = '<tr><td colspan="6" class="text-center py-3">Memuat...</td></tr>';
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res.success) return;
+        var body = document.getElementById('karyawanBody');
+        body.innerHTML = res.data.map(function (k) {
+          var badgeClass = k.status === 'Aktif' ? 'bg-success' : k.status === 'Pending' ? 'bg-warning text-dark' :
+                            k.status === 'Nonaktif' ? 'bg-secondary' : 'bg-danger';
+          return '<tr><td>' + k.id + '</td><td>' + k.nama + '</td><td>' + k.departemen + '</td><td>' + k.shiftId +
+            '</td><td><span class="badge ' + badgeClass + ' badge-status">' + k.status + '</span></td>' +
+            '<td>' +
+            '<button class="btn btn-sm btn-outline-primary me-1" onclick="editKaryawan(\'' + k.id + '\',\'' + k.nama + '\',\'' + k.departemen + '\',\'' + k.shiftId + '\',\'' + k.status + '\')">Edit</button>' +
+            '<button class="btn btn-sm btn-outline-secondary" onclick="resetPin(\'' + k.id + '\')">Reset PIN</button>' +
+            '</td></tr>';
+        }).join('');
+      }).getKaryawanAdmin(adminUser, adminPass);
+    }
+
+    function editKaryawan(id, nama, dept, shiftId, status) {
+      var namaBaru = prompt('Nama:', nama); if (namaBaru === null) return;
+      var deptBaru = prompt('Departemen:', dept); if (deptBaru === null) return;
+      var shiftBaru = prompt('ID Shift (lihat tab Kelola Shift):', shiftId); if (shiftBaru === null) return;
+      var statusBaru = prompt('Status (Aktif/Nonaktif):', status); if (statusBaru === null) return;
+
+      google.script.run.withSuccessHandler(function (res) {
+        alert(res.message);
+        muatKaryawan();
+      }).updateKaryawanAdmin(id, namaBaru, deptBaru, shiftBaru, statusBaru, adminUser, adminPass);
+    }
+
+    function resetPin(id) {
+      var pinBaru = prompt('Masukkan PIN baru (min. 4 digit) untuk ID ' + id + ':');
+      if (!pinBaru) return;
+      google.script.run.withSuccessHandler(function (res) {
+        alert(res.message);
+      }).resetPinKaryawan(id, pinBaru, adminUser, adminPass);
+    }
+
+    // ---------- KELOLA SHIFT ----------
+    function muatShift() {
+      document.getElementById('shiftBody').innerHTML = '<tr><td colspan="6" class="text-center py-3">Memuat...</td></tr>';
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res.success) return;
+        shiftListCache = res.data;
+        var body = document.getElementById('shiftBody');
+        body.innerHTML = res.data.map(function (s) {
+          return '<tr><td>' + s.id + '</td><td>' + s.nama + '</td><td>' + s.jamMasuk + '</td><td>' + s.jamPulang +
+            '</td><td>' + s.toleransi + ' menit</td><td>' +
+            '<button class="btn btn-sm btn-outline-primary me-1" onclick="isiFormShift(\'' + s.id + '\')">Edit</button>' +
+            '<button class="btn btn-sm btn-outline-danger" onclick="hapusShift(\'' + s.id + '\')">Hapus</button></td></tr>';
+        }).join('');
+      }).getShiftAdmin(adminUser, adminPass);
+    }
+
+    function isiFormShift(id) {
+      var s = shiftListCache.find(function (x) { return x.id === id; });
+      if (!s) return;
+      document.getElementById('shiftId').value = s.id;
+      document.getElementById('shiftNama').value = s.nama;
+      document.getElementById('shiftMasuk').value = s.jamMasuk;
+      document.getElementById('shiftPulang').value = s.jamPulang;
+      document.getElementById('shiftToleransi').value = s.toleransi;
+    }
+
+    function simpanShift() {
+      var id = document.getElementById('shiftId').value.trim();
+      var nama = document.getElementById('shiftNama').value.trim();
+      var masuk = document.getElementById('shiftMasuk').value;
+      var pulang = document.getElementById('shiftPulang').value;
+      var toleransi = document.getElementById('shiftToleransi').value;
+
+      google.script.run.withSuccessHandler(function (res) {
+        document.getElementById('shiftMsg').textContent = res.message;
+        document.getElementById('shiftMsg').className = 'small mt-2 ' + (res.success ? 'text-success' : 'text-danger');
+        if (res.success) {
+          ['shiftId', 'shiftNama', 'shiftMasuk', 'shiftPulang', 'shiftToleransi'].forEach(function (i) { document.getElementById(i).value = ''; });
+          muatShift();
+        }
+      }).saveShiftAdmin(id, nama, masuk, pulang, toleransi, adminUser, adminPass);
+    }
+
+    function hapusShift(id) {
+      if (!confirm('Hapus shift ' + id + '?')) return;
+      google.script.run.withSuccessHandler(function (res) {
+        alert(res.message);
+        muatShift();
+      }).deleteShiftAdmin(id, adminUser, adminPass);
+    }
+
+    // ---------- PENGATURAN ----------
+    function gantiPassword() {
+      var lama = document.getElementById('oldPass').value;
+      var baru = document.getElementById('newPass').value;
+      google.script.run.withSuccessHandler(function (res) {
+        document.getElementById('passMsg').textContent = res.message;
+        document.getElementById('passMsg').className = 'small mt-2 ' + (res.success ? 'text-success' : 'text-danger');
+        if (res.success) { adminPass = baru; document.getElementById('oldPass').value = ''; document.getElementById('newPass').value = ''; }
+      }).changeAdminPassword(adminUser, lama, baru);
+    }
+
+    function tambahAdmin() {
+      var u = document.getElementById('newAdminUser').value.trim();
+      var nama = document.getElementById('newAdminNama').value.trim();
+      var p = document.getElementById('newAdminPass').value;
+      google.script.run.withSuccessHandler(function (res) {
+        document.getElementById('addAdminMsg').textContent = res.message;
+        document.getElementById('addAdminMsg').className = 'small mt-2 ' + (res.success ? 'text-success' : 'text-danger');
+        if (res.success) {
+          ['newAdminUser', 'newAdminNama', 'newAdminPass'].forEach(function (i) { document.getElementById(i).value = ''; });
+          muatAdminList();
+        }
+      }).addAdminAccount(adminUser, adminPass, u, p, nama);
+    }
+
+    function muatAdminList() {
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res.success) return;
+        document.getElementById('adminListBody').innerHTML = res.data.map(function (a) {
+          return '<tr><td>' + a.username + '</td><td>' + a.nama + '</td><td>' + a.tanggal + '</td></tr>';
+        }).join('');
+      }).getAdminList(adminUser, adminPass);
+    }
+  </script>
+</body>
+</html>
