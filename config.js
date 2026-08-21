@@ -3,7 +3,7 @@
 // ====================================================================
 // Cara dapat URL ini: script.google.com -> project Anda -> Deploy ->
 // Manage deployments -> copy "Web app URL" (diakhiri /exec)
-const API_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwqQlEwk5N3tTOi9XLWdWn2uqizplhzkNeT-RcvWT-Vee0ytvxLQ5V_VTtEYZTvHcxH/exec';
 
 // Helper pemanggil API. Selalu POST dengan Content-Type text/plain
 // (bukan application/json) supaya browser TIDAK mengirim preflight
