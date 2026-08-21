@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Absensi Karyawan — Menu Utama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#2f5aff; --primary-soft:#e8edff;
+    --success:#17b26a; --success-soft:#e7faf0;
+    --warning:#f79009; --warning-soft:#fff6e8;
+    --text:#131a2c; --muted:#6b7385; --border:#e7eaf3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:linear-gradient(160deg,var(--primary) 0%,#0f235c 100%);min-height:100vh;color:var(--text);}
+  h1,h3,h4{font-family:'Plus Jakarta Sans',sans-serif;}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px;}
+  .shell{width:100%;max-width:420px;}
+  .top{text-align:center;color:#fff;margin-bottom:26px;}
+  .top .logo{width:60px;height:60px;border-radius:18px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px;}
+  .top h1{font-size:1.4rem;margin:0 0 4px;font-weight:800;}
+  .top p{margin:0;font-size:.85rem;opacity:.8;}
+
+  .menu-card{background:#fff;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;text-decoration:none;color:var(--text);box-shadow:0 10px 26px rgba(10,20,60,.15);margin-bottom:14px;transition:transform .15s;}
+  .menu-card:active{transform:scale(.98);}
+  .menu-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+  .menu-title{font-weight:700;font-size:1rem;margin-bottom:2px;}
+  .menu-sub{font-size:.78rem;color:var(--muted);}
+  .menu-arrow{margin-left:auto;color:var(--muted);font-size:1.2rem;flex-shrink:0;}
+
+  .ico-absen{background:var(--primary-soft);}
+  .ico-daftar{background:var(--success-soft);}
+  .ico-admin{background:var(--warning-soft);}
+
+  .footnote{text-align:center;color:rgba(255,255,255,.55);font-size:.75rem;margin-top:22px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="shell">
+    <div class="top">
+      <div class="logo">🕒</div>
+      <h1>Absensi Karyawan</h1>
+      <p>Klinik Utama Rawat Inap Medika Utama</p>
+    </div>
+
+    <a href="absen.html" class="menu-card">
+      <div class="menu-ico ico-absen">📋</div>
+      <div>
+        <div class="menu-title">Absen Karyawan</div>
+        <div class="menu-sub">Login dengan ID &amp; PIN untuk absen masuk/pulang</div>
+      </div>
+      <div class="menu-arrow">→</div>
+    </a>
+
+    <a href="daftar.html" class="menu-card">
+      <div class="menu-ico ico-daftar">📝</div>
+      <div>
+        <div class="menu-title">Daftar Karyawan Baru</div>
+        <div class="menu-sub">Belum punya akun? Daftar di sini</div>
+      </div>
+      <div class="menu-arrow">→</div>
+    </a>
+
+    <a href="admin.html" class="menu-card">
+      <div class="menu-ico ico-admin">🔒</div>
+      <div>
+        <div class="menu-title">Login Admin</div>
+        <div class="menu-sub">Dashboard pengaturan &amp; laporan absensi</div>
+      </div>
+      <div class="menu-arrow">→</div>
+    </a>
+
+    <p class="footnote">Pilih menu sesuai kebutuhan Anda</p>
+  </div>
+</div>
+</body>
+</html>

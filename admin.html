@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Admin — Absensi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --primary:#2f5aff; --primary-dark:#1d3fd6; --primary-soft:#e8edff;
+    --success:#17b26a; --success-soft:#e7faf0;
+    --warning:#f79009; --warning-soft:#fff6e8;
+    --danger:#f04438; --danger-soft:#feeceb;
+    --bg:#f3f5fb; --card:#ffffff; --text:#131a2c; --muted:#6b7385; --border:#e7eaf3;
+    --sidebar-w:250px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+  h1,h2,h3,h4,.brand,.stat-num{font-family:'Plus Jakarta Sans',sans-serif;}
+
+  /* ===== LOGIN GATE ===== */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,var(--primary) 0%,#0f235c 100%);}
+  .login-card{background:#fff;border-radius:24px;padding:34px 28px;width:100%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .login-logo{width:56px;height:56px;border-radius:16px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 14px;}
+  .form-control{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);font-size:.95rem;margin-bottom:12px;font-family:inherit;}
+  .form-control:focus{outline:none;border-color:var(--primary);}
+  .btn{border:none;border-radius:12px;font-weight:700;font-size:.9rem;padding:12px 16px;cursor:pointer;font-family:inherit;}
+  .btn-primary{background:var(--primary);color:#fff;width:100%;}
+  .btn-sm{padding:8px 14px;font-size:.8rem;border-radius:10px;}
+  .btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--text);}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-danger-outline{background:#fff;border:1.5px solid var(--danger);color:var(--danger);}
+
+  /* ===== LAYOUT ===== */
+  .layout{display:flex;min-height:100vh;}
+  .sidebar{width:var(--sidebar-w);background:#0f1a3e;color:#fff;flex-shrink:0;padding:22px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  .sb-brand{display:flex;align-items:center;gap:10px;padding:0 6px 22px;font-weight:800;font-size:1.05rem;}
+  .sb-brand .ico{width:36px;height:36px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;}
+  .sb-nav{display:flex;flex-direction:column;gap:4px;}
+  .sb-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:rgba(255,255,255,.7);text-decoration:none;font-size:.88rem;font-weight:600;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;position:relative;}
+  .sb-link:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .sb-link.active{background:var(--primary);color:#fff;}
+  .sb-link .badge-pill{margin-left:auto;background:var(--danger);color:#fff;font-size:.68rem;padding:2px 7px;border-radius:999px;}
+  .sb-foot{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);}
+
+  .main{flex:1;min-width:0;}
+  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5;}
+  .topbar h2{margin:0;font-size:1.15rem;font-weight:800;}
+  .topbar .sub{font-size:.78rem;color:var(--muted);margin-top:1px;}
+  .admin-chip{display:flex;align-items:center;gap:10px;background:#f6f7fb;padding:6px 14px 6px 6px;border-radius:999px;}
+  .admin-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;}
+  .content{padding:24px 28px 60px;}
+
+  /* stat cards */
+  .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  .stat-card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 4px 14px rgba(23,40,90,.04);}
+  .stat-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .stat-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;}
+  .stat-num{font-size:1.6rem;font-weight:800;margin-top:12px;}
+  .stat-lbl{font-size:.78rem;color:var(--muted);margin-top:2px;}
+
+  .grid-2{display:grid;grid-template-columns:1.1fr 1.4fr;gap:18px;}
+  .card{background:var(--card);border-radius:18px;padding:20px;box-shadow:0 4px 14px rgba(23,40,90,.04);}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .card-head b{font-size:.95rem;}
+
+  .activity-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .activity-row:last-child{border-bottom:none;}
+  .avatar-sm{width:36px;height:36px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0;}
+  .activity-name{font-weight:700;font-size:.85rem;}
+  .activity-meta{font-size:.72rem;color:var(--muted);}
+
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:.74rem;padding:0 10px 10px 0;border-bottom:1px solid var(--border);}
+  td{padding:10px 10px 10px 0;border-bottom:1px solid var(--border);}
+  .foto-thumb{width:38px;height:38px;object-fit:cover;border-radius:8px;}
+
+  .badge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:.72rem;font-weight:700;}
+  .badge-success{background:var(--success-soft);color:var(--success);}
+  .badge-warning{background:var(--warning-soft);color:var(--warning);}
+  .badge-danger{background:var(--danger-soft);color:var(--danger);}
+  .badge-muted{background:#f1f2f6;color:var(--muted);}
+  .badge-primary{background:var(--primary-soft);color:var(--primary);}
+
+  .toolbar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
+  .field label{font-size:.75rem;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;}
+  .field input,.field select{padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;font-size:.85rem;}
+
+  .tab-view{display:none;}
+  .tab-view.active{display:block;}
+
+  .msg-ok{color:var(--success);font-size:.8rem;margin-top:6px;}
+  .msg-err{color:var(--danger);font-size:.8rem;margin-top:6px;}
+
+  @media (max-width:960px){
+    .sidebar{position:fixed;left:-260px;transition:left .2s;z-index:30;}
+    .sidebar.open{left:0;}
+    .stat-cards{grid-template-columns:repeat(2,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+    .content{padding:18px;}
+    .topbar{padding:14px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN GATE ===== -->
+<div class="login-wrap" id="loginGate">
+  <div class="login-card">
+    <div class="login-logo">🔒</div>
+    <h3 style="text-align:center;margin:0 0 4px;font-weight:800;">Login Admin</h3>
+    <p style="text-align:center;color:var(--muted);font-size:.85rem;margin:0 0 22px;">Dashboard pengaturan absensi</p>
+    <input type="text" id="adminUser" class="form-control" placeholder="Username" autocomplete="username">
+    <input type="password" id="adminPass" class="form-control" placeholder="Password" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="cekLogin()">Masuk</button>
+    <div id="loginErr" class="msg-err" style="text-align:center;"></div>
+    <a href="absen.html" style="display:block;text-align:center;margin-top:16px;font-size:.8rem;color:var(--muted);text-decoration:none;">Ke halaman Absen</a>
+    <a href="index.html" style="display:block;text-align:center;margin-top:8px;font-size:.8rem;color:var(--muted);text-decoration:none;">← Menu Utama</a>
+  </div>
+</div>
+
+<!-- ===== LAYOUT UTAMA ===== -->
+<div class="layout hidden" id="mainApp" style="display:none;">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-brand"><div class="ico">🕒</div> Absensi Karyawan</div>
+    <div class="sb-nav" id="navTabs">
+      <button class="sb-link active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="sb-link" data-tab="pendaftaran">🆕 Pendaftaran Baru <span class="badge-pill hidden" id="badgePending">0</span></button>
+      <button class="sb-link" data-tab="karyawan">👥 Kelola Karyawan</button>
+      <button class="sb-link" data-tab="shift">🕐 Kelola Shift</button>
+      <button class="sb-link" data-tab="laporan">📄 Laporan</button>
+      <button class="sb-link" data-tab="pengaturan">⚙️ Pengaturan</button>
+    </div>
+    <div class="sb-foot">
+      <button class="sb-link" onclick="location.reload()">↩ Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="pageTitle">Dashboard</h2>
+        <div class="sub" id="pageSub">Ringkasan absensi klinik hari ini</div>
+      </div>
+      <div class="admin-chip">
+        <div class="admin-avatar" id="adminInit">A</div>
+        <div>
+          <div style="font-size:.82rem;font-weight:700;" id="adminNamaLabel">Admin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- TAB DASHBOARD -->
+      <div class="tab-view active" id="tab-dashboard">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico" style="background:var(--primary-soft);">👥</span></div>
+            <div class="stat-num" id="statTotal">-</div>
+            <div class="stat-lbl">Total Karyawan Aktif</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico" style="background:var(--success-soft);">✅</span></div>
+            <div class="stat-num" id="statHadir">-</div>
+            <div class="stat-lbl">Hadir Hari Ini</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico" style="background:var(--warning-soft);">⏱️</span></div>
+            <div class="stat-num" id="statTelat">-</div>
+            <div class="stat-lbl">Terlambat Hari Ini</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico" style="background:var(--danger-soft);">❌</span></div>
+            <div class="stat-num" id="statTidakHadir">-</div>
+            <div class="stat-lbl">Tidak Hadir Hari Ini</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><b>Rekap Bulan Ini</b></div>
+            <canvas id="donutChart" height="220"></canvas>
+            <div style="display:flex;justify-content:space-around;margin-top:14px;font-size:.78rem;">
+              <div><span style="color:var(--success);">●</span> Hadir <b id="legHadir">0</b></div>
+              <div><span style="color:var(--warning);">●</span> Telat <b id="legTelat">0</b></div>
+              <div><span style="color:var(--danger);">●</span> Tidak Hadir <b id="legTidak">0</b></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><b>Absensi Terbaru</b><a class="btn btn-sm btn-outline" onclick="gantiTab('laporan')" style="cursor:pointer;">Lihat Laporan</a></div>
+            <div id="terbaruList"><p style="color:var(--muted);font-size:.85rem;">Memuat...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PENDAFTARAN -->
+      <div class="tab-view" id="tab-pendaftaran">
+        <div class="card">
+          <div class="card-head"><b>Menunggu Persetujuan</b></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Nama</th><th>Departemen</th><th>Shift</th><th>Tanggal Daftar</th><th>Aksi</th></tr></thead>
+              <tbody id="pendingBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px 0;">Memuat...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB KARYAWAN -->
+      <div class="tab-view" id="tab-karyawan">
+        <div class="card">
+          <div class="card-head"><b>Semua Karyawan</b><button class="btn btn-sm btn-outline" onclick="muatKaryawan()">🔄 Muat Ulang</button></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Nama</th><th>Departemen</th><th>Shift</th><th>Status</th><th>Aksi</th></tr></thead>
+              <tbody id="karyawanBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px 0;">Memuat...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB SHIFT -->
+      <div class="tab-view" id="tab-shift">
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-head"><b>Tambah / Update Shift</b></div>
+          <div class="toolbar">
+            <div class="field"><label>ID Shift</label><input id="shiftId"></div>
+            <div class="field"><label>Nama Shift</label><input id="shiftNama"></div>
+            <div class="field"><label>Jam Masuk</label><input type="time" id="shiftMasuk"></div>
+            <div class="field"><label>Jam Pulang</label><input type="time" id="shiftPulang"></div>
+            <div class="field"><label>Toleransi (menit)</label><input type="number" id="shiftToleransi" style="width:110px;"></div>
+            <button class="btn btn-primary btn-sm" onclick="simpanShift()">Simpan</button>
+          </div>
+          <div id="shiftMsg"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><b>Daftar Shift</b></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Nama</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Toleransi</th><th>Aksi</th></tr></thead>
+              <tbody id="shiftBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px 0;">Memuat...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB LAPORAN -->
+      <div class="tab-view" id="tab-laporan">
+        <div class="card" style="margin-bottom:18px;">
+          <div class="toolbar">
+            <div class="field"><label>Dari Tanggal</label><input type="date" id="startDate"></div>
+            <div class="field"><label>Sampai Tanggal</label><input type="date" id="endDate"></div>
+            <div class="field">
+              <label>Jenis Laporan</label>
+              <select id="filterType">
+                <option value="hadir">Absen Masuk (Hadir)</option>
+                <option value="telat">Telat</option>
+                <option value="tidak_hadir">Tidak Hadir</option>
+                <option value="semua">Semua (Masuk &amp; Pulang)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="muatLaporan()">Tampilkan</button>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><b id="tableTitle">Hasil Laporan</b></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"><tr><td style="text-align:center;color:var(--muted);padding:16px 0;">Pilih tanggal lalu klik Tampilkan</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PENGATURAN -->
+      <div class="tab-view" id="tab-pengaturan">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><b>Ganti Password Saya</b></div>
+            <div class="field" style="margin-bottom:10px;"><input type="password" id="oldPass" class="form-control" placeholder="Password lama"></div>
+            <div class="field" style="margin-bottom:10px;"><input type="password" id="newPass" class="form-control" placeholder="Password baru (min. 6 karakter)"></div>
+            <button class="btn btn-primary btn-sm" onclick="gantiPassword()">Ganti Password</button>
+            <div id="passMsg"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><b>Tambah Akun Admin Baru</b></div>
+            <div class="field" style="margin-bottom:10px;"><input id="newAdminUser" class="form-control" placeholder="Username baru"></div>
+            <div class="field" style="margin-bottom:10px;"><input id="newAdminNama" class="form-control" placeholder="Nama"></div>
+            <div class="field" style="margin-bottom:10px;"><input type="password" id="newAdminPass" class="form-control" placeholder="Password (min. 6 karakter)"></div>
+            <button class="btn btn-primary btn-sm" onclick="tambahAdmin()">Tambah Admin</button>
+            <div id="addAdminMsg"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <div class="card-head"><b>Daftar Akun Admin</b></div>
+          <table>
+            <thead><tr><th>Username</th><th>Nama</th><th>Dibuat</th></tr></thead>
+            <tbody id="adminListBody"><tr><td colspan="3" style="text-align:center;color:var(--muted);padding:12px 0;">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  var adminUser = '', adminPass = '';
+  var lastData = [], lastFilter = 'hadir';
+  var shiftListCache = [];
+  var donutChart = null;
+
+  async function cekLogin() {
+    var u = document.getElementById('adminUser').value.trim();
+    var p = document.getElementById('adminPass').value;
+    const res = await apiCall('adminLogin', { username: u, password: p });
+    if (res.success) {
+      adminUser = u; adminPass = p;
+      document.getElementById('loginGate').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+      document.getElementById('adminNamaLabel').textContent = res.nama;
+      document.getElementById('adminInit').textContent = res.nama.slice(0, 1).toUpperCase();
+      document.getElementById('startDate').valueAsDate = new Date();
+      document.getElementById('endDate').valueAsDate = new Date();
+      muatDashboard();
+    } else {
+      document.getElementById('loginErr').textContent = res.message;
+    }
+  }
+
+  var judulTab = {
+    dashboard: ['Dashboard', 'Ringkasan absensi klinik hari ini'],
+    pendaftaran: ['Pendaftaran Baru', 'Setujui atau tolak karyawan yang mendaftar'],
+    karyawan: ['Kelola Karyawan', 'Data seluruh karyawan terdaftar'],
+    shift: ['Kelola Shift', 'Atur jam kerja & toleransi keterlambatan'],
+    laporan: ['Laporan', 'Rekap absensi per rentang tanggal'],
+    pengaturan: ['Pengaturan', 'Akun admin & keamanan']
+  };
+
+  function gantiTab(tab) {
+    document.querySelectorAll('.sb-link[data-tab]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
+    document.querySelectorAll('.tab-view').forEach(function (v) { v.classList.remove('active'); });
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('pageTitle').textContent = judulTab[tab][0];
+    document.getElementById('pageSub').textContent = judulTab[tab][1];
+    if (tab === 'dashboard') muatDashboard();
+    if (tab === 'pendaftaran') muatPending();
+    if (tab === 'karyawan') muatKaryawan();
+    if (tab === 'shift') muatShift();
+    if (tab === 'pengaturan') muatAdminList();
+  }
+
+  document.getElementById('navTabs').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-tab]');
+    if (btn) gantiTab(btn.getAttribute('data-tab'));
+  });
+
+  // ===== DASHBOARD =====
+  async function muatDashboard() {
+    const res = await apiCall('getDashboardAdmin', { username: adminUser, password: adminPass });
+    if (!res.success) { alert(res.message); return; }
+
+    document.getElementById('statTotal').textContent = res.stat.totalKaryawan;
+    document.getElementById('statHadir').textContent = res.stat.hadirHariIni;
+    document.getElementById('statTelat').textContent = res.stat.telatHariIni;
+    document.getElementById('statTidakHadir').textContent = res.stat.tidakHadirHariIni;
+
+    var badge = document.getElementById('badgePending');
+    if (res.stat.pendingPendaftaran > 0) { badge.classList.remove('hidden'); badge.textContent = res.stat.pendingPendaftaran; }
+    else badge.classList.add('hidden');
+
+    document.getElementById('legHadir').textContent = res.rekapBulan.hadir;
+    document.getElementById('legTelat').textContent = res.rekapBulan.telat;
+    document.getElementById('legTidak').textContent = res.rekapBulan.tidakHadir;
+
+    var ctx = document.getElementById('donutChart').getContext('2d');
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Hadir', 'Telat', 'Tidak Hadir'],
+        datasets: [{ data: [res.rekapBulan.hadir, res.rekapBulan.telat, res.rekapBulan.tidakHadir], backgroundColor: ['#17b26a', '#f79009', '#f04438'], borderWidth: 0 }]
+      },
+      options: { cutout: '70%', plugins: { legend: { display: false } } }
+    });
+
+    var list = document.getElementById('terbaruList');
+    list.innerHTML = res.terbaru.length ? res.terbaru.map(function (r) {
+      var badgeCls = r.status === 'Telat' ? 'badge-warning' : r.status === 'Tepat Waktu' ? 'badge-success' : 'badge-primary';
+      var inisial = r.nama.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
+      return '<div class="activity-row"><div class="avatar-sm">' + inisial + '</div>' +
+        '<div style="flex:1;"><div class="activity-name">' + r.nama + '</div><div class="activity-meta">Absen ' + r.tipe + ' • ' + r.tanggal + '</div></div>' +
+        '<div style="text-align:right;"><span class="badge ' + badgeCls + '">' + r.status + '</span><div class="activity-meta" style="margin-top:3px;">' + r.jam + '</div></div></div>';
+    }).join('') : '<p style="color:var(--muted);font-size:.85rem;">Belum ada aktivitas.</p>';
+  }
+
+  // ===== LAPORAN =====
+  async function muatLaporan() {
+    var start = document.getElementById('startDate').value;
+    var end = document.getElementById('endDate').value;
+    var filter = document.getElementById('filterType').value;
+    lastFilter = filter;
+    document.getElementById('tableBody').innerHTML = '<tr><td style="text-align:center;padding:16px 0;">Memuat...</td></tr>';
+
+    const res = await apiCall('getReport', { startDate: start, endDate: end, filterType: filter, username: adminUser, password: adminPass });
+    if (!res.success) { alert(res.message); return; }
+    lastData = res.data;
+    renderTable(filter, res.data);
+  }
+
+  function renderTable(filter, data) {
+    var head = document.getElementById('tableHead');
+    var body = document.getElementById('tableBody');
+    document.getElementById('tableTitle').textContent =
+      filter === 'hadir' ? 'Daftar Absen Masuk' : filter === 'telat' ? 'Daftar Telat' :
+      filter === 'tidak_hadir' ? 'Daftar Tidak Hadir' : 'Semua Absensi (Masuk & Pulang)';
+
+    if (filter === 'tidak_hadir') {
+      head.innerHTML = '<tr><th>Tanggal</th><th>ID</th><th>Nama</th><th>Shift</th><th>Status</th></tr>';
+      body.innerHTML = data.length ? data.map(function (r) {
+        return '<tr><td>' + r.tanggal + '</td><td>' + r.id + '</td><td>' + r.nama + '</td><td>' + r.shift + '</td><td><span class="badge badge-danger">Tidak Hadir</span></td></tr>';
+      }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px 0;">Tidak ada data</td></tr>';
+    } else {
+      head.innerHTML = '<tr><th>Foto</th><th>Tanggal</th><th>ID</th><th>Nama</th><th>Tipe</th><th>Jam</th><th>Shift</th><th>Status</th><th>Lokasi</th></tr>';
+      body.innerHTML = data.length ? data.map(function (r) {
+        var badge = r.status === 'Telat' ? 'badge-warning' : r.status === 'Pulang Cepat' ? 'badge-primary' : 'badge-success';
+        var foto = r.foto ? '<img class="foto-thumb" src="' + r.foto + '">' : '-';
+        return '<tr><td>' + foto + '</td><td>' + r.tanggal + '</td><td>' + r.id + '</td><td>' + r.nama + '</td><td>' + r.tipe + '</td><td>' + r.jam + '</td><td>' + r.shift +
+          '</td><td><span class="badge ' + badge + '">' + r.status + '</span></td><td><a href="https://maps.google.com/?q=' + r.lat + ',' + r.lng + '" target="_blank">Peta</a></td></tr>';
+      }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px 0;">Tidak ada data</td></tr>';
+    }
+  }
+
+  function exportCSV() {
+    if (!lastData.length) { alert('Tidak ada data untuk diexport. Klik Tampilkan dulu.'); return; }
+    var rows = [];
+    if (lastFilter === 'tidak_hadir') {
+      rows.push(['Tanggal', 'ID', 'Nama', 'Shift', 'Status']);
+      lastData.forEach(function (r) { rows.push([r.tanggal, r.id, r.nama, r.shift, 'Tidak Hadir']); });
+    } else {
+      rows.push(['Tanggal', 'ID', 'Nama', 'Tipe', 'Jam', 'Shift', 'Status', 'Latitude', 'Longitude', 'Alamat']);
+      lastData.forEach(function (r) { rows.push([r.tanggal, r.id, r.nama, r.tipe, r.jam, r.shift, r.status, r.lat, r.lng, r.alamat]); });
+    }
+    var csv = rows.map(function (row) { return row.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'laporan_absensi_' + lastFilter + '.csv'; link.click();
+  }
+
+  // ===== PENDAFTARAN =====
+  async function muatPending() {
+    const res = await apiCall('getKaryawanAdmin', { username: adminUser, password: adminPass });
+    if (!res.success) return;
+    var pending = res.data.filter(function (k) { return k.status === 'Pending'; });
+    var body = document.getElementById('pendingBody');
+    body.innerHTML = pending.length ? pending.map(function (k) {
+      return '<tr><td>' + k.id + '</td><td>' + k.nama + '</td><td>' + k.departemen + '</td><td>' + k.shiftId + '</td><td>' + k.tanggal + '</td><td>' +
+        '<button class="btn btn-sm btn-success" style="margin-right:6px;" onclick="setujui(\'' + k.id + '\')">Setujui</button>' +
+        '<button class="btn btn-sm btn-danger-outline" onclick="tolak(\'' + k.id + '\')">Tolak</button></td></tr>';
+    }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px 0;">Tidak ada pendaftaran baru</td></tr>';
+  }
+
+  async function setujui(id) { const res = await apiCall('approveEmployee', { id: id, username: adminUser, password: adminPass }); alert(res.message); muatPending(); }
+  async function tolak(id) { if (!confirm('Tolak pendaftaran ID ' + id + '?')) return; const res = await apiCall('rejectEmployee', { id: id, username: adminUser, password: adminPass }); alert(res.message); muatPending(); }
+
+  // ===== KARYAWAN =====
+  async function muatKaryawan() {
+    document.getElementById('karyawanBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px 0;">Memuat...</td></tr>';
+    const res = await apiCall('getKaryawanAdmin', { username: adminUser, password: adminPass });
+    if (!res.success) return;
+    document.getElementById('karyawanBody').innerHTML = res.data.map(function (k) {
+      var badgeClass = k.status === 'Aktif' ? 'badge-success' : k.status === 'Pending' ? 'badge-warning' : k.status === 'Nonaktif' ? 'badge-muted' : 'badge-danger';
+      return '<tr><td>' + k.id + '</td><td>' + k.nama + '</td><td>' + k.departemen + '</td><td>' + k.shiftId + '</td><td><span class="badge ' + badgeClass + '">' + k.status + '</span></td><td>' +
+        '<button class="btn btn-sm btn-outline" style="margin-right:6px;" onclick="editKaryawan(\'' + k.id + '\',\'' + k.nama + '\',\'' + k.departemen + '\',\'' + k.shiftId + '\',\'' + k.status + '\')">Edit</button>' +
+        '<button class="btn btn-sm btn-outline" onclick="resetPin(\'' + k.id + '\')">Reset PIN</button></td></tr>';
+    }).join('');
+  }
+
+  async function editKaryawan(id, nama, dept, shiftId, status) {
+    var namaBaru = prompt('Nama:', nama); if (namaBaru === null) return;
+    var deptBaru = prompt('Departemen:', dept); if (deptBaru === null) return;
+    var shiftBaru = prompt('ID Shift (lihat tab Kelola Shift):', shiftId); if (shiftBaru === null) return;
+    var statusBaru = prompt('Status (Aktif/Nonaktif):', status); if (statusBaru === null) return;
+    const res = await apiCall('updateKaryawanAdmin', { id: id, nama: namaBaru, departemen: deptBaru, shiftId: shiftBaru, status: statusBaru, username: adminUser, password: adminPass });
+    alert(res.message); muatKaryawan();
+  }
+
+  async function resetPin(id) {
+    var pinBaru = prompt('Masukkan PIN baru (min. 4 digit) untuk ID ' + id + ':'); if (!pinBaru) return;
+    const res = await apiCall('resetPinKaryawan', { id: id, pinBaru: pinBaru, username: adminUser, password: adminPass });
+    alert(res.message);
+  }
+
+  // ===== SHIFT =====
+  async function muatShift() {
+    document.getElementById('shiftBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px 0;">Memuat...</td></tr>';
+    const res = await apiCall('getShiftAdmin', { username: adminUser, password: adminPass });
+    if (!res.success) return;
+    shiftListCache = res.data;
+    document.getElementById('shiftBody').innerHTML = res.data.map(function (s) {
+      return '<tr><td>' + s.id + '</td><td>' + s.nama + '</td><td>' + s.jamMasuk + '</td><td>' + s.jamPulang + '</td><td>' + s.toleransi + ' menit</td><td>' +
+        '<button class="btn btn-sm btn-outline" style="margin-right:6px;" onclick="isiFormShift(\'' + s.id + '\')">Edit</button>' +
+        '<button class="btn btn-sm btn-danger-outline" onclick="hapusShift(\'' + s.id + '\')">Hapus</button></td></tr>';
+    }).join('');
+  }
+
+  function isiFormShift(id) {
+    var s = shiftListCache.find(function (x) { return x.id === id; }); if (!s) return;
+    document.getElementById('shiftId').value = s.id;
+    document.getElementById('shiftNama').value = s.nama;
+    document.getElementById('shiftMasuk').value = s.jamMasuk;
+    document.getElementById('shiftPulang').value = s.jamPulang;
+    document.getElementById('shiftToleransi').value = s.toleransi;
+  }
+
+  async function simpanShift() {
+    var id = document.getElementById('shiftId').value.trim();
+    var nama = document.getElementById('shiftNama').value.trim();
+    var masuk = document.getElementById('shiftMasuk').value;
+    var pulang = document.getElementById('shiftPulang').value;
+    var toleransi = document.getElementById('shiftToleransi').value;
+    const res = await apiCall('saveShiftAdmin', { shiftId: id, nama: nama, jamMasuk: masuk, jamPulang: pulang, toleransi: toleransi, username: adminUser, password: adminPass });
+    document.getElementById('shiftMsg').innerHTML = '<p class="' + (res.success ? 'msg-ok' : 'msg-err') + '">' + res.message + '</p>';
+    if (res.success) { ['shiftId', 'shiftNama', 'shiftMasuk', 'shiftPulang', 'shiftToleransi'].forEach(function (i) { document.getElementById(i).value = ''; }); muatShift(); }
+  }
+
+  async function hapusShift(id) {
+    if (!confirm('Hapus shift ' + id + '?')) return;
+    const res = await apiCall('deleteShiftAdmin', { shiftId: id, username: adminUser, password: adminPass });
+    alert(res.message); muatShift();
+  }
+
+  // ===== PENGATURAN =====
+  async function gantiPassword() {
+    var lama = document.getElementById('oldPass').value, baru = document.getElementById('newPass').value;
+    const res = await apiCall('changeAdminPassword', { username: adminUser, oldPassword: lama, newPassword: baru });
+    document.getElementById('passMsg').innerHTML = '<p class="' + (res.success ? 'msg-ok' : 'msg-err') + '">' + res.message + '</p>';
+    if (res.success) { adminPass = baru; document.getElementById('oldPass').value = ''; document.getElementById('newPass').value = ''; }
+  }
+
+  async function tambahAdmin() {
+    var u = document.getElementById('newAdminUser').value.trim();
+    var nama = document.getElementById('newAdminNama').value.trim();
+    var p = document.getElementById('newAdminPass').value;
+    const res = await apiCall('addAdminAccount', { creatorUsername: adminUser, creatorPassword: adminPass, newUsername: u, newPassword: p, newNama: nama });
+    document.getElementById('addAdminMsg').innerHTML = '<p class="' + (res.success ? 'msg-ok' : 'msg-err') + '">' + res.message + '</p>';
+    if (res.success) { ['newAdminUser', 'newAdminNama', 'newAdminPass'].forEach(function (i) { document.getElementById(i).value = ''; }); muatAdminList(); }
+  }
+
+  async function muatAdminList() {
+    const res = await apiCall('getAdminList', { username: adminUser, password: adminPass });
+    if (!res.success) return;
+    document.getElementById('adminListBody').innerHTML = res.data.map(function (a) {
+      return '<tr><td>' + a.username + '</td><td>' + a.nama + '</td><td>' + a.tanggal + '</td></tr>';
+    }).join('');
+  }
+</script>
+</body>
+</html>
